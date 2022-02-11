@@ -163,4 +163,4 @@ runs:
         tlmgr option showall
         ## Read excludes
         while IFS=\= read pkg; do EXCLUDES+=('\055-exclude ' $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
-        tlmgr update --all "${EXCLUDES[@]}"
+        tlmgr update --all "${EXCLUDES[@]}" --repository ctan
