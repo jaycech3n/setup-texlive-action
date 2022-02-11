@@ -13,7 +13,7 @@ inputs:
     description: File path of a package list (plain text, one per line). The default is an empty file.
     required: false
     default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.packages
-  update-excludes:
+  update-excludes-path:
     description: File path of a package list (plain text, one per line). The default is an empty file.
     required: false
     default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.update-excludes
@@ -137,7 +137,7 @@ runs:
     - name: Update TeX Live distribution (Windows)
       if: runner.os == 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
       env:
-        EXCLUDES_PATH: ${{ inputs.update-excludes }}
+        EXCLUDES_PATH: ${{ inputs.update-excludes-path }}
       shell: powershell
       run: |
         # Update TeX Live distribution (Windows)
@@ -150,7 +150,7 @@ runs:
     - name: Update TeX Live distribution (Linux and macOS)
       if: runner.os != 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
       env:
-        EXCLUDES_PATH: ${{ inputs.update-excludes }}
+        EXCLUDES_PATH: ${{ inputs.update-excludes-path }}
       shell: bash
       run: |
         # Update TeX Live distribution (Linux and macOS)
