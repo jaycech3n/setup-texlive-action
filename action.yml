@@ -13,10 +13,10 @@ inputs:
     description: File path of a package list (plain text, one per line). The default is an empty file.
     required: false
     default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.packages
-  update-excludes-path:
+  excludes-path:
     description: File path of a package list (plain text, one per line). The default is an empty file.
     required: false
-    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.update-excludes
+    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.excludes
   cache-key:
     description: The unique key to use for cache storage and retrieval. The default is `texlive`.
     required: false
@@ -139,30 +139,30 @@ runs:
     - name: Update TeX Live distribution (Windows)
       if: runner.os == 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
       env:
-        EXCLUDES_PATH: ${{ inputs.update-excludes-path }}
+        EXCLUDES_PATH: ${{ inputs.excludes-path }}
       shell: powershell
       run: |
         # Update TeX Live distribution (Windows)
         ## Update tlmgr
         tlmgr update --self
-        ## Update everything else
-        tlmgr option showall
-        ### Read package excludes
+        ## Read package excludes
         [array] $EXCLUDES = (Select-String -Pattern '^(\s*#.*)?$' -NotMatch ${env:EXCLUDES_PATH}).Line
-        tlmgr update --all $(($EXCLUDES | % {'--exclude ' + $_}) -join " ")
+        ## Remove excludes
+        tlmgr remove --force $($EXCLUDES -join " ")
+        ## Update everything else
+        tlmgr update --all
     - name: Update TeX Live distribution (Linux and macOS)
       if: runner.os != 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
       env:
-        EXCLUDES_PATH: ${{ inputs.update-excludes-path }}
+        EXCLUDES_PATH: ${{ inputs.excludes-path }}
       shell: bash
       run: |
         # Update TeX Live distribution (Linux and macOS)
         ## Update tlmgr
         tlmgr update --self
-        ## Update everything else
-        tlmgr option showall
-        ## Read excludes
+        ## Read package excludes
         while IFS=\= read pkg; do EXCLUDES+=('\055-exclude ' $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
-        tlmgr update --list
-        tlmgr update --list "${EXCLUDES[@]}"
-        tlmgr update --all "${EXCLUDES[@]}" --repository ctan
+        ## Remove excludes
+        tlmgr remove --force "${EXCLUDES[@]}"
+        ## Update everything else
+        tlmgr update --all
