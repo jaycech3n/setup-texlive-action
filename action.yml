@@ -1,5 +1,5 @@
 name: Setup TeX Live
-author: Paolo Brasolin <paolo.brasolin@gmail.com>
+author: Paolo Brasolin <paolo.brasolin@gmail.com>, Josh Chen <josh@joshchen.io>
 description: GHA action to setup TeX Live
 branding:
   icon: book-open
@@ -8,11 +8,15 @@ inputs:
   profile-path:
     description: File path of a tlmgr profile. The default is a `scheme-infraonly` with no documentation or source files. You use it as a starting point, see https://github.com/paolobrasolin/setup-texlive-action/blob/main/texlive.profile
     required: false
-    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.profile 
+    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.profile
   packages-path:
     description: File path of a package list (plain text, one per line). The default is an empty file.
     required: false
-    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.packages 
+    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.packages
+  update-excludes:
+    description: File path of a package list (plain text, one per line). The default is an empty file.
+    required: false
+    default: ${{ github.action_path }}${{ runner.os == 'Windows' && '\' || '/'}}texlive.update-excludes
   cache-key:
     description: The unique key to use for cache storage and retrieval. The default is `texlive`.
     required: false
@@ -132,19 +136,27 @@ runs:
 
     - name: Update TeX Live distribution (Windows)
       if: runner.os == 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
+      env:
+        EXCLUDES_PATH: ${{ inputs.update-excludes }}
       shell: powershell
       run: |
         # Update TeX Live distribution (Windows)
         ## Update tlmgr
         tlmgr update --self
         ## Update everything else
-        tlmgr update --all
+        ### Read package excludes
+        [array] $EXCLUDES = (Select-String -Pattern '^(\s*#.*)?$' -NotMatch ${env:EXCLUDES_PATH}).Line
+        tlmgr update --all $(($EXCLUDES | % {"--exclude " + $_}) -join " ")
     - name: Update TeX Live distribution (Linux and macOS)
       if: runner.os != 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
+      env:
+        EXCLUDES_PATH: ${{ inputs.update-excludes }}
       shell: bash
       run: |
         # Update TeX Live distribution (Linux and macOS)
         ## Update tlmgr
         tlmgr update --self
         ## Update everything else
-        tlmgr update --all
+        ## Read excludes
+        while IFS=\= read pkg; do EXCLUDES+=("--exclude" + "$pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
+        tlmgr update --all "${EXCLUDES[@]}"
