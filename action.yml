@@ -146,7 +146,7 @@ runs:
         ## Update everything else
         ### Read package excludes
         [array] $EXCLUDES = (Select-String -Pattern '^(\s*#.*)?$' -NotMatch ${env:EXCLUDES_PATH}).Line
-        tlmgr update --all $(($EXCLUDES | % {"--exclude " + $_}) -join " ")
+        tlmgr update --all $(($EXCLUDES | % {'--exclude ' + $_}) -join " ")
     - name: Update TeX Live distribution (Linux and macOS)
       if: runner.os != 'Windows' && steps.cache-texlive.outputs.cache-hit == 'true'
       env:
@@ -158,5 +158,5 @@ runs:
         tlmgr update --self
         ## Update everything else
         ## Read excludes
-        while IFS=\= read pkg; do EXCLUDES+=("--exclude " + $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
+        while IFS=\= read pkg; do EXCLUDES+=('--exclude ' + $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
         tlmgr update --all "${EXCLUDES[@]}"
