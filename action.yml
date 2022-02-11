@@ -121,6 +121,7 @@ runs:
         ## Read nonempty lines from packages file into an array
         [array] $TEXLIVE_PACKAGES = (Select-String -Pattern '^(\s*#.*)?$' -NotMatch ${env:TEXLIVE_PACKAGES_PATH}).Line
         ## Use tlmgr to install the packages
+        tlmgr option showall
         tlmgr install $($TEXLIVE_PACKAGES -join " ")
     - name: Install TeX Live packages (Linux or macOS)
       if: runner.os != 'Windows' && steps.cache-texlive.outputs.cache-hit != 'true'
@@ -132,6 +133,7 @@ runs:
         ## Read nonempty lines from packages file into an array
         while IFS=\= read pkg; do TEXLIVE_PACKAGES+=($pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$TEXLIVE_PACKAGES_PATH")
         ## Use tlmgr to install the packages
+        tlmgr option showall
         tlmgr install "${TEXLIVE_PACKAGES[@]}"
 
     - name: Update TeX Live distribution (Windows)
@@ -144,6 +146,7 @@ runs:
         ## Update tlmgr
         tlmgr update --self
         ## Update everything else
+        tlmgr option showall
         ### Read package excludes
         [array] $EXCLUDES = (Select-String -Pattern '^(\s*#.*)?$' -NotMatch ${env:EXCLUDES_PATH}).Line
         tlmgr update --all $(($EXCLUDES | % {'--exclude ' + $_}) -join " ")
@@ -157,6 +160,7 @@ runs:
         ## Update tlmgr
         tlmgr update --self
         ## Update everything else
+        tlmgr option showall
         ## Read excludes
         while IFS=\= read pkg; do EXCLUDES+=('\055-exclude ' $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
         tlmgr update --all "${EXCLUDES[@]}"
