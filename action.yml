@@ -161,7 +161,7 @@ runs:
         ## Update tlmgr
         tlmgr update --self
         ## Read package excludes
-        while IFS=\= read pkg; do EXCLUDES+=('\055-exclude ' $pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
+        while IFS=\= read pkg; do EXCLUDES+=($pkg); done < <(grep --invert-match --extended-regexp '^(\s*#.*)?$' "$EXCLUDES_PATH")
         ## Remove excludes
         tlmgr remove --force "${EXCLUDES[@]}"
         ## Update everything else
